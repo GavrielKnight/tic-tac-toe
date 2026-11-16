@@ -277,11 +277,9 @@ void mejorMovimiento(char pc) {
                 tablero[i][j] = ' ';
 
                 // Conservar el movimiento con mejor puntuación.
-                if ((maximizando && valor > mejorValor) ||
-                    (!maximizando && valor < mejorValor) ||
-                    (valor == mejorValor &&
-                     ((maximizando && evaluacion > mejorEvaluacion) ||
-                      (!maximizando && evaluacion < mejorEvaluacion)))) {
+                // if (maximizando && valor > mejorValor || !maximizando && valor < mejorValor) {
+                if (maximizando && valor > mejorValor || !maximizando && valor < mejorValor ||
+                    valor == mejorValor && (maximizando && evaluacion > mejorEvaluacion || !maximizando && evaluacion < mejorEvaluacion)) {
                     mejorValor = valor;
                     mejorEvaluacion = evaluacion;
                     mejorFila = i;
@@ -319,7 +317,9 @@ int main() {
     // Asignar simbolo a la computadora.
     char pc = jugador == 'X' ? 'O' : 'X';
 
+    // Mostrar tablero inicial
     cout << "Tu eres " << jugador << " y la computadora es " << pc << ".\n";
+    mostrarTablero();
 
     // El jugador X siempre es el primero en jugar.
     char turno = 'X';
