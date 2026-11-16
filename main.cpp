@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+const int LIMITE_NODOS_IMPRESOS = 20;
+
 // Tablero de 3x3
 char tablero[3][3] = {
     {' ', ' ', ' '},
@@ -10,6 +12,8 @@ char tablero[3][3] = {
 
 int nodosExplorados = 0;
 int hojasEvaluadas = 0;
+int nodosImpresos = 0;
+int valor = -1;
 
 // Comprueba si existe un ganador. Regresa 'X', 'O' o ' ' si todavía no hay ganador.
 char ganador() {
@@ -70,6 +74,17 @@ void mostrarTablero() {
     } cout << "\n";
 }
 
+// Imprime tablero, su valor minimax y quién jugó.
+void imprimirNodo(char ch) {
+    if (nodosImpresos < LIMITE_NODOS_IMPRESOS) {
+        ++nodosImpresos;
+        cout << "\n----- Tablero " << nodosImpresos << " -----\n";
+        mostrarTablero();
+        cout << "Jugo " << ch << '\n';
+        cout << "Valor minimax: " << valor << '\n';
+    }
+}
+
 // Puntua lineas abiertas: premia las amenazas de X y penaliza las de O.
 int evaluarPosicion() {
     int puntuacion = 0;
@@ -106,51 +121,19 @@ int evaluarPosicion() {
     return puntuacion;
 }
 
-void imprimirSangria(int profundidad) {
-    for (int i = 0; i < profundidad; i++) cout << "  ";
-}
-
 // MINIMAX SIN PODA: Explora todos los movimientos hasta un estado terminal.
-int minimax(bool maximizando, int profundidad = 0, bool mostrarRama = false) {
+int minimax(bool maximizando) {
     nodosExplorados++;
 
     // Caso base: alguien ganó.
     char resultado = ganador();
-    if (resultado == 'X') {
-        if (mostrarRama) {
-            imprimirSangria(profundidad);
-            cout << "Terminal: gana X, valor = 1\n";
-        }
-        hojasEvaluadas++;
-        return 1;
-    }
-    if (resultado == 'O') {
-        if (mostrarRama) {
-            imprimirSangria(profundidad);
-            cout << "Terminal: gana O, valor = -1\n";
-        }
-        hojasEvaluadas++;
-        return -1;
-    }
+    if (resultado == 'X') { hojasEvaluadas++; return 1; }
+    if (resultado == 'O') { hojasEvaluadas++; return -1; }
 
     // Caso base: empate.
-    if (!hayMovimientos()) {
-        if (mostrarRama) {
-            imprimirSangria(profundidad);
-            cout << "Terminal: empate, valor = 0\n";
-        }
-        hojasEvaluadas++;
-        return 0;
-    }
+    if (!hayMovimientos()) { hojasEvaluadas++; return 0; }
 
-    if (mostrarRama) {
-        imprimirSangria(profundidad);
-        cout << "Nodo " << (maximizando ? "MAX (X)" : "MIN (O)") << "\n";
-    }
-
-    bool ramaHijaMostrada = false;
-
-    // MAX: X intenta maximizar.
+    // MAX: el oponente intenta maximizar.
     if (maximizando) {
         // Explorar todas las casillas disponibles.
         int mejorValor = -1;
@@ -160,15 +143,11 @@ int minimax(bool maximizando, int profundidad = 0, bool mostrarRama = false) {
                     // Simular movimiento.
                     tablero[i][j] = 'X';
 
-                    bool mostrarHija = mostrarRama && !ramaHijaMostrada;
-                    if (mostrarHija) {
-                        imprimirSangria(profundidad);
-                        cout << "Prueba X en (" << i << ", " << j << ")\n";
-                        ramaHijaMostrada = true;
-                    }
-
                     // Evaluar movimiento.
-                    int valor = minimax(false, profundidad + 1, mostrarHija);
+                    valor = minimax(false);
+
+                    // Imprimir tablero y su valor minimax.
+                    imprimirNodo('X');
 
                     // Deshacer movimiento.
                     tablero[i][j] = ' ';
@@ -177,10 +156,6 @@ int minimax(bool maximizando, int profundidad = 0, bool mostrarRama = false) {
                     mejorValor = max(mejorValor, valor);
                 }
             }
-        }
-        if (mostrarRama) {
-            imprimirSangria(profundidad);
-            cout << "MAX devuelve valor = " << mejorValor << "\n";
         }
         return mejorValor;
     }
@@ -195,15 +170,11 @@ int minimax(bool maximizando, int profundidad = 0, bool mostrarRama = false) {
                     // Simular movimiento.
                     tablero[i][j] = 'O';
 
-                    bool mostrarHija = mostrarRama && !ramaHijaMostrada;
-                    if (mostrarHija) {
-                        imprimirSangria(profundidad);
-                        cout << "Prueba O en (" << i << ", " << j << ")\n";
-                        ramaHijaMostrada = true;
-                    }
-
                     // Evaluar movimiento.
-                    int valor = minimax(true, profundidad + 1, mostrarHija);
+                    valor = minimax(true);
+
+                    // Imprimir tablero y su valor minimax.
+                    imprimirNodo('O');
 
                     // Deshacer movimiento.
                     tablero[i][j] = ' ';
@@ -212,10 +183,6 @@ int minimax(bool maximizando, int profundidad = 0, bool mostrarRama = false) {
                     mejorValor = min(mejorValor, valor);
                 }
             }
-        }
-        if (mostrarRama) {
-            imprimirSangria(profundidad);
-            cout << "MIN devuelve valor = " << mejorValor << "\n";
         }
         return mejorValor;
     }
@@ -230,48 +197,37 @@ void mejorMovimiento(char pc) {
 
     nodosExplorados = 0;
     hojasEvaluadas = 0;
+    nodosImpresos = 0;
     cout << "\n===== Analisis minimax de la computadora =====\n";
 
     // Probar cada movimiento disponible.
     bool movGanador = false;
-    bool mostrarRama = true;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
 
             if (tablero[i][j] == ' ') {
                 // Simular movimiento.
                 tablero[i][j] = pc;
-                mostrarTablero();
-                bool mostrarEstaRama = mostrarRama;
-                if (mostrarEstaRama) {
-                    cout << "Rama de ejemplo: " << pc << " en (" << i << ", " << j << ")\n";
-                }
 
                 // Checar si el movimiento es ganador.
                 if (ganador() == pc) {
+                    movGanador = true;
                     mejorValor = pc == 'X' ? 1 : -1;
                     mejorEvaluacion = evaluarPosicion();
                     mejorFila = i;
                     mejorColumna = j;
-                    movGanador = true;
                     ++nodosExplorados;
                     ++hojasEvaluadas;
-                    if (mostrarEstaRama) {
-                        imprimirSangria(1);
-                        cout << "Terminal: gana " << pc << ", valor = " << mejorValor << "\n";
-                    }
-                    mostrarRama = false;
+                    imprimirNodo(pc);
                     break;
                 }
 
                 // Evaluar movimiento usando minimax.
-                int valor = minimax(pc == 'O', 1, mostrarEstaRama);
+                int valor = minimax(pc == 'O');
                 int evaluacion = evaluarPosicion();
-                mostrarRama = false;
 
-                // Mostrar puntuación del movimiento.
-                cout << "\n" << pc << " en (" << i << ", " << j << ") -> Puntuacion: "
-                     << valor << ", Evaluacion posicional: " << evaluacion << "\n";
+                // Imprimir tablero y su valor minimax.
+                imprimirNodo(pc);
 
                 // Deshacer movimiento.
                 tablero[i][j] = ' ';
