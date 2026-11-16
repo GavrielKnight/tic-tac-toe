@@ -303,6 +303,7 @@ void mejorMovimiento(char pc) {
 int main() {
     int fila, columna;
     char jugador;
+    string entrada;
 
     cout << "===== TIC-TAC-TOE =====\n";
 
@@ -313,6 +314,7 @@ int main() {
         if (jugador != 'X' && jugador != 'O')
             cout << "Eleccion invalida. Escribe X o O.\n";
     } while (jugador != 'X' && jugador != 'O');
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Asignar simbolo a la computadora.
     char pc = jugador == 'X' ? 'O' : 'X';
@@ -329,7 +331,18 @@ int main() {
             mejorMovimiento(pc);
 
         } else { // Turno del jugador.
-            cout << "Ingresa fila y columna (0-2): "; cin >> fila >> columna;
+
+            // Pedir al jugador ingresar su jugada
+            cout << "Ingresa fila y columna (0-2): ";
+
+            // Checar que los datos ingresados sean enteros
+            if (!getline(cin, entrada)) { cout << "\nNo se pudo leer la jugada.\n"; return 1; }
+            istringstream flujoEntrada(entrada);
+            string sobrante;
+            if (!(flujoEntrada >> fila >> columna) || (flujoEntrada >> sobrante)) {
+                cout << "Entrada invalida. Ingresa dos enteros separados por un espacio.\n";
+                continue;
+            }
 
             // Validar movimiento del jugador.
             if (fila < 0 || fila > 2 || columna < 0 || columna > 2 || tablero[fila][columna] != ' ') {
